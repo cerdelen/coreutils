@@ -2031,7 +2031,7 @@ fn show_dir_name(
     };
 
     write_os_str(out, &name)?;
-    write!(out, ":")
+    stdout().write_all(":".as_bytes())
 }
 
 #[allow(clippy::cognitive_complexity)]
@@ -2079,7 +2079,7 @@ pub fn list(locs: Vec<&Path>, config: &Config) -> UResult<()> {
         // color is given
         if style_manager.get_normal_style().is_some() {
             let to_write = style_manager.reset(true);
-            write!(out, "{to_write}")?;
+            stdout().write_all(to_write.as_bytes())?;
         }
     }
 
@@ -2303,7 +2303,7 @@ fn enter_directory(
     // Print total after any error display
     if config.format == Format::Long || config.alloc_size {
         let total = return_total(&entries, config, out)?;
-        write!(out, "{}", total.as_str())?;
+        stdout().write_all(total.as_bytes())?;
         if config.dired {
             dired::add_total(dired, total.len());
         }
@@ -2501,13 +2501,13 @@ fn display_items(
                 let more_info =
                     display_additional_leading_info(item, &padding_collection, config, out)?;
 
-                write!(out, "{more_info}")?;
+                stdout().write_all(more_info.as_bytes())?;
             }
             #[cfg(not(unix))]
             if config.alloc_size {
                 let more_info =
                     display_additional_leading_info(item, &padding_collection, config, out)?;
-                write!(out, "{more_info}")?;
+                stdout().write_all(more_info.as_bytes())?;
             }
             display_item_long(
                 item,
@@ -2535,7 +2535,7 @@ fn display_items(
 
         // we need to apply normal color to non filename output
         if let Some(style_manager) = style_manager {
-            write!(out, "{}", style_manager.apply_normal())?;
+            stdout().write_all(style_manager.apply_normal().as_bytes())?;
         }
 
         let mut names_vec = Vec::new();
@@ -2574,7 +2574,7 @@ fn display_items(
                         writeln!(out, ",")?;
                     } else {
                         current_col += name_width + 2;
-                        write!(out, ", ")?;
+                        stdout().write_all(", ".as_bytes())?;
                     }
                     write_os_str(out, &name)?;
                 }
@@ -2632,7 +2632,7 @@ fn display_grid(
         let mut printed_something = false;
         for name in names {
             if printed_something {
-                write!(out, "  ")?;
+                stdout().write_all("  ".as_bytes())?;
             }
             printed_something = true;
             write_os_str(out, &name)?;
@@ -2693,7 +2693,7 @@ fn display_grid(
                 width: width as usize,
             },
         );
-        write!(out, "{grid}")?;
+        stdout().write_all(grid.to_string().as_bytes())?;
     }
     Ok(())
 }
@@ -2740,7 +2740,7 @@ fn display_item_long(
 
     // apply normal color to non filename outputs
     if let Some(style_manager) = style_manager {
-        write!(output_display, "{}", style_manager.apply_normal()).unwrap();
+        stdout().write_all(style_manager.apply_normal().as_bytes()).unwrap();
     }
     if config.dired {
         output_display.extend(b"  ");
