@@ -377,6 +377,39 @@ fn test_permission_denied() {
 
 #[test]
 #[allow(clippy::unreadable_literal)]
+fn test_chmod_recursive_correct_exit_code() {
+    let (at, mut ucmd) = at_and_ucmd!();
+    at.mkdir("fail");
+    at.mkdir("ok");
+
+    make_file(&at.plus_as_string("fail/f"), 0o100444);
+
+    let ok_perms_before = at.metadata("ok").permissions().mode();
+    let ok_perms_expected = (ok_perms_before & !0o444) | 0o222;
+
+    #[cfg(not(target_os = "linux"))]
+    let err_msg = "chmod: Permission denied\n";
+    #[cfg(target_os = "linux")]
+    let err_msg = "chmod: 'fail': Permission denied\n";
+
+    // trying to change fail should fail followed but trying to change the ok directory
+    // we want to ensure that the exit code is failing
+    ucmd.arg("-R")
+        .arg("-r,a+w")
+        .arg("fail")
+        .arg("ok")
+        .umask(0)
+        .fails()
+        .stderr_is(err_msg);
+
+    // fail was unchanged
+    assert_eq!(at.metadata("fail/f").permissions().mode(), 0o100444);
+    // ok was changed
+    assert_eq!(at.metadata("ok").permissions().mode(), ok_perms_expected);
+}
+
+#[test]
+#[allow(clippy::unreadable_literal)]
 fn test_chmod_recursive() {
     let (at, mut ucmd) = at_and_ucmd!();
     at.mkdir("a");
