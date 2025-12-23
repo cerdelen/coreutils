@@ -380,9 +380,14 @@ fn test_permission_denied() {
 fn test_chmod_recursive_correct_exit_code() {
     let (at, mut ucmd) = at_and_ucmd!();
     at.mkdir("fail");
+    at.mkdir("fail/f");
     at.mkdir("ok");
+    at.mkdir("ok/o");
 
-    make_file(&at.plus_as_string("fail/f"), 0o100444);
+    let mut perms = at.metadata("ok/o").permissions();
+    perms.set_mode(0o311);
+    set_permissions(at.plus_as_string("ok"), perms.clone()).unwrap();
+    set_permissions(at.plus_as_string("ok/o"), perms).unwrap();
 
     let ok_perms_before = at.metadata("ok").permissions().mode();
     let ok_perms_expected = (ok_perms_before & !0o444) | 0o222;
