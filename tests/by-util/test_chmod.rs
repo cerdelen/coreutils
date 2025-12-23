@@ -385,7 +385,7 @@ fn test_chmod_recursive_correct_exit_code() {
     at.mkdir("ok/o");
 
     let mut perms = at.metadata("ok/o").permissions();
-    perms.set_mode(0o311);
+    perms.set_mode(0o777);
     set_permissions(at.plus_as_string("ok"), perms.clone()).unwrap();
     set_permissions(at.plus_as_string("ok/o"), perms).unwrap();
 
