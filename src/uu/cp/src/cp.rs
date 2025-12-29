@@ -2114,6 +2114,7 @@ fn handle_copy_mode(
     source_in_command_line: bool,
     source_is_fifo: bool,
     source_is_socket: bool,
+    source_is_device_node: bool,
     created_parent_dirs: &mut HashSet<PathBuf>,
     #[cfg(unix)] source_is_stream: bool,
 ) -> CopyResult<PerformedAction> {
@@ -2155,6 +2156,7 @@ fn handle_copy_mode(
                 source_is_symlink,
                 source_is_fifo,
                 source_is_socket,
+                source_is_device_node,
                 symlinked_files,
                 created_parent_dirs,
                 #[cfg(unix)]
@@ -2179,6 +2181,7 @@ fn handle_copy_mode(
                             source_is_symlink,
                             source_is_fifo,
                             source_is_socket,
+                            source_is_device_node,
                             symlinked_files,
                             created_parent_dirs,
                             #[cfg(unix)]
@@ -2216,6 +2219,7 @@ fn handle_copy_mode(
                             source_is_symlink,
                             source_is_fifo,
                             source_is_socket,
+                            source_is_device_node,
                             symlinked_files,
                             created_parent_dirs,
                             #[cfg(unix)]
@@ -2232,6 +2236,7 @@ fn handle_copy_mode(
                     source_is_symlink,
                     source_is_fifo,
                     source_is_socket,
+                    source_is_device_node,
                     symlinked_files,
                     created_parent_dirs,
                     #[cfg(unix)]
@@ -2469,6 +2474,10 @@ fn copy_file(
     )?;
 
     #[cfg(unix)]
+    let source_is_device_node = source_metadata.file_type().is_block_device()
+        || source_metadata.file_type().is_char_device();
+
+    #[cfg(unix)]
     let source_is_fifo = source_metadata.file_type().is_fifo();
     #[cfg(unix)]
     let source_is_socket = source_metadata.file_type().is_socket();
@@ -2476,6 +2485,8 @@ fn copy_file(
     let source_is_fifo = false;
     #[cfg(not(unix))]
     let source_is_socket = false;
+    #[cfg(not(unix))]
+    let source_is_device_node = false;
 
     let source_is_stream = is_stream(&source_metadata);
 
@@ -2489,6 +2500,7 @@ fn copy_file(
         source_in_command_line,
         source_is_fifo,
         source_is_socket,
+        source_is_device_node,
         created_parent_dirs,
         #[cfg(unix)]
         source_is_stream,
@@ -2617,6 +2629,7 @@ fn copy_helper(
     source_is_symlink: bool,
     source_is_fifo: bool,
     source_is_socket: bool,
+    source_is_device_node: bool,
     symlinked_files: &mut HashSet<FileInformation>,
     created_parent_dirs: &mut HashSet<PathBuf>,
     #[cfg(unix)] source_is_stream: bool,
@@ -2640,6 +2653,8 @@ fn copy_helper(
         copy_fifo(dest, options.overwrite, options.debug)?;
     } else if source_is_symlink {
         copy_link(source, dest, symlinked_files, options)?;
+    } else if source_is_device_node && !options.copy_contents{
+        copy_device_node(source, dest)?;
     } else {
         let copy_debug = copy_on_write(
             source,
@@ -2657,6 +2672,24 @@ fn copy_helper(
     }
 
     Ok(())
+}
+
+// Copies a device node by creating a new one using mknod.
+#[cfg(unix)]
+fn copy_device_node(source: &Path, dest: &Path) -> CopyResult<()> {
+    use std::{ffi::CString, os::unix::{ffi::OsStrExt, fs::MetadataExt}};
+    use libc::{dev_t, mode_t};
+    let meta = fs::symlink_metadata(source)?;
+    let mode = meta.permissions().mode() as mode_t;
+    let dev = meta.rdev() as dev_t;
+    let dest_c_str = CString::new(dest.as_os_str().as_bytes())
+        .map_err(|_| CpError::Error(translate!("cp-error-cannot-create-cstring", "path" => dest.quote())))?;
+    unsafe {
+        match libc::mknod(dest_c_str.as_ptr(), mode, dev) {
+            0 => Ok(()),
+            _ => Err(translate!("cp-error-cannot-create-device-node", "path" => dest.quote()).into()),
+        }
+    }
 }
 
 // "Copies" a FIFO by creating a new one. This workaround is because Rust's
