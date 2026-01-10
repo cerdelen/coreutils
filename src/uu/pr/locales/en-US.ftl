@@ -90,6 +90,8 @@ pr-help-help = Print help information
 # Page header text
 pr-page = Page
 
+pr-try-help-message = Try 'pr --help' for more information.
+
 # Error messages
 pr-error-reading-input = pr: Reading from input {$file} gave error
 pr-error-unknown-filetype = pr: {$file}: unknown filetype
@@ -99,3 +101,4 @@ pr-error-no-such-file = pr: cannot open {$file}, No such file or directory
 pr-error-column-merge-conflict = cannot specify number of columns when printing in parallel
 pr-error-across-merge-conflict = cannot specify both printing across and printing in parallel
 pr-error-invalid-pages-range = invalid --pages argument '{$start}:{$end}'
+pr-error-invalid-expand-tab-argument='-e' extra characters or invalid number in the argument: ‘{$arg}’

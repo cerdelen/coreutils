@@ -569,12 +569,12 @@ fn build_options(
                 if c.is_ascii_digit() {
                     s
                         .parse()
-                        .map_err(|_e| PrError::EncounteredErrors { msg: format!("'-e' extra characters or invalid number in the argument: ‘{s}’\nTry 'pr --help' for more information.") })
+                        .map_err(|_e| PrError::EncounteredErrors { msg: format!("{}\n{}", translate!("pr-error-invalid-expand-tab-argument", "arg" => s), translate!("pr-try-help-message")) })
                         .map(|width| ExpandTabsOptions{input_char: TAB, width})
                 } else if s.len() > 1 {
                     s[1..]
                         .parse()
-                        .map_err(|_e| PrError::EncounteredErrors { msg: format!("'-e' extra characters or invalid number in the argument: ‘{}’\nTry 'pr --help' for more information.", &s[1..]) })
+                        .map_err(|_e| PrError::EncounteredErrors { msg: format!("{}\n{}", translate!("pr-error-invalid-expand-tab-argument", "arg" => &s[1..]), translate!("pr-try-help-message")) })
                         .map(|width| ExpandTabsOptions{input_char: c, width})
                 } else {
                     Ok(ExpandTabsOptions{input_char: c, width: 8})
