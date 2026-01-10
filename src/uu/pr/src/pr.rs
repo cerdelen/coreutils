@@ -436,11 +436,8 @@ fn recreate_arguments(args: &[String]) -> Vec<String> {
         .iter()
         .find_position(|x| e_regex.is_match(x.trim()));
     if let Some((pos, value)) = expand_tabs_option {
-        let trimmed_val = value.trim();
-        if trimmed_val.len() <= 2 {
+        if value.trim().len() <= 2 {
             arguments[pos] = "-e\t8".to_string();
-        } else if trimmed_val.len() == 3 {
-            arguments[pos].push('8');
         }
     }
 
@@ -575,10 +572,14 @@ fn build_options(
                         .map_err(|_e| PrError::EncounteredErrors { msg: format!("'-e' extra characters or invalid number in the argument: ‘{s}’\nTry 'pr --help' for more information.") })
                         .map(|width| ExpandTabsOptions{input_char: TAB, width})
                 } else {
-                    s[1..]
-                        .parse()
-                        .map_err(|_e| PrError::EncounteredErrors { msg: format!("'-e' extra characters or invalid number in the argument: ‘{}’\nTry 'pr --help' for more information.", &s[1..]) })
-                        .map(|width| ExpandTabsOptions{input_char: c, width})
+                    if s.len() > 1 {
+                        s[1..]
+                            .parse()
+                            .map_err(|_e| PrError::EncounteredErrors { msg: format!("'-e' extra characters or invalid number in the argument: ‘{}’\nTry 'pr --help' for more information.", &s[1..]) })
+                            .map(|width| ExpandTabsOptions{input_char: c, width})
+                    } else {
+                        Ok(ExpandTabsOptions{input_char: c, width: 8})
+                    }
                 }
             })
         }).transpose()?;
