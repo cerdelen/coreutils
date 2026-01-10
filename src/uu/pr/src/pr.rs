@@ -571,15 +571,13 @@ fn build_options(
                         .parse()
                         .map_err(|_e| PrError::EncounteredErrors { msg: format!("'-e' extra characters or invalid number in the argument: ‘{s}’\nTry 'pr --help' for more information.") })
                         .map(|width| ExpandTabsOptions{input_char: TAB, width})
+                } else if s.len() > 1 {
+                    s[1..]
+                        .parse()
+                        .map_err(|_e| PrError::EncounteredErrors { msg: format!("'-e' extra characters or invalid number in the argument: ‘{}’\nTry 'pr --help' for more information.", &s[1..]) })
+                        .map(|width| ExpandTabsOptions{input_char: c, width})
                 } else {
-                    if s.len() > 1 {
-                        s[1..]
-                            .parse()
-                            .map_err(|_e| PrError::EncounteredErrors { msg: format!("'-e' extra characters or invalid number in the argument: ‘{}’\nTry 'pr --help' for more information.", &s[1..]) })
-                            .map(|width| ExpandTabsOptions{input_char: c, width})
-                    } else {
-                        Ok(ExpandTabsOptions{input_char: c, width: 8})
-                    }
+                    Ok(ExpandTabsOptions{input_char: c, width: 8})
                 }
             })
         }).transpose()?;
@@ -896,14 +894,17 @@ fn split_lines_if_form_feed(
                         chunk.clear();
                     }
 
-                    if let Some(expand_options) = expand_options
-                        && *byte == expand_options.input_char as u8
-                    {
-                        let spaces_needed = expand_options.width as usize
-                            - (chunk.len() % expand_options.width as usize);
-                        chunk.resize(chunk.len() + spaces_needed, b' ');
-                    } else {
-                        chunk.push(*byte);
+                    match expand_options {
+                        Some(expand_options) => {
+                            if *byte == expand_options.input_char as u8 {
+                                let spaces_needed = expand_options.width as usize
+                                    - (chunk.len() % expand_options.width as usize);
+                                chunk.resize(chunk.len() + spaces_needed, b' ');
+                            } else {
+                                chunk.push(*byte);
+                            }
+                        }
+                        None => chunk.push(*byte),
                     }
 
                     f_occurred = 0;
