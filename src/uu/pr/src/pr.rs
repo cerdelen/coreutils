@@ -570,12 +570,12 @@ fn build_options(
                 if c.is_ascii_digit() {
                     s
                         .parse()
-                        .map_err(|_e| PrError::EncounteredErrors { msg: format!("ERROR") })
+                        .map_err(|_e| PrError::EncounteredErrors { msg: format!("'-e' extra characters or invalid number in the argument: ‘{}’\nTry 'pr --help' for more information.", s) })
                         .map(|width| ExpandTabsOptions{input_char: TAB, width})
                 } else {
                     s[1..]
                         .parse()
-                        .map_err(|_e| PrError::EncounteredErrors { msg: format!("ERROR") })
+                        .map_err(|_e| PrError::EncounteredErrors { msg: format!("'-e' extra characters or invalid number in the argument: ‘{}’\nTry 'pr --help' for more information.", &s[1..]) })
                         .map(|width| ExpandTabsOptions{input_char: c, width})
                 }
             })
