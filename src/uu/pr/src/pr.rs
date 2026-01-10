@@ -22,8 +22,6 @@ use uucore::format_usage;
 use uucore::time::{FormatSystemTimeFallback, format, format_system_time};
 use uucore::translate;
 
-use crate::options::EXPAND_TABS;
-
 const TAB: char = '\t';
 const LINES_PER_PAGE: usize = 66;
 const LINES_PER_PAGE_FOR_FORM_FEED: usize = 63;
@@ -434,7 +432,9 @@ fn recreate_arguments(args: &[String]) -> Vec<String> {
 
     // To ensure not to accidentally delete the next argument after a short flag for -e we insert
     // the default values for the -e flag is '-e' is present without direct arguments.
-    let expand_tabs_option = arguments.iter().find_position(|x| e_regex.is_match(x.trim()));
+    let expand_tabs_option = arguments
+        .iter()
+        .find_position(|x| e_regex.is_match(x.trim()));
     if let Some((pos, value)) = expand_tabs_option {
         let trimmed_val = value.trim();
         if trimmed_val.len() <= 2 {
@@ -565,7 +565,6 @@ fn build_options(
             }
         });
 
-
     let expand_tabs = matches
         .get_one::<String>(options::EXPAND_TABS)
         .map(|s| {
@@ -573,7 +572,7 @@ fn build_options(
                 if c.is_ascii_digit() {
                     s
                         .parse()
-                        .map_err(|_e| PrError::EncounteredErrors { msg: format!("'-e' extra characters or invalid number in the argument: ‘{}’\nTry 'pr --help' for more information.", s) })
+                        .map_err(|_e| PrError::EncounteredErrors { msg: format!("'-e' extra characters or invalid number in the argument: ‘{s}’\nTry 'pr --help' for more information.") })
                         .map(|width| ExpandTabsOptions{input_char: TAB, width})
                 } else {
                     s[1..]
@@ -867,7 +866,10 @@ fn open(path: &str) -> Result<Box<dyn Read>, PrError> {
     )
 }
 
-fn split_lines_if_form_feed(file_content: Result<String, std::io::Error>, expand_options: &Option<ExpandTabsOptions>) -> Vec<FileLine> {
+fn split_lines_if_form_feed(
+    file_content: Result<String, std::io::Error>,
+    expand_options: Option<&ExpandTabsOptions>,
+) -> Vec<FileLine> {
     file_content.map_or_else(
         |e| {
             vec![FileLine {
@@ -893,9 +895,11 @@ fn split_lines_if_form_feed(file_content: Result<String, std::io::Error>, expand
                         chunk.clear();
                     }
 
-                    if let Some(expand_options) = expand_options &&
-                        *byte == expand_options.input_char as u8 {
-                        let spaces_needed = expand_options.width as usize - (chunk.len() % expand_options.width as usize);
+                    if let Some(expand_options) = expand_options
+                        && *byte == expand_options.input_char as u8
+                    {
+                        let spaces_needed = expand_options.width as usize
+                            - (chunk.len() % expand_options.width as usize);
                         chunk.resize(chunk.len() + spaces_needed, b' ');
                     } else {
                         chunk.push(*byte);
@@ -942,7 +946,7 @@ fn read_stream_and_create_pages(
 
     Box::new(
         lines
-            .flat_map(|s| split_lines_if_form_feed(s, &options.expand_tabs))
+            .flat_map(|s| split_lines_if_form_feed(s, options.expand_tabs.as_ref()))
             .enumerate()
             .map(move |(i, line)| FileLine {
                 line_number: i + start_line_number,
