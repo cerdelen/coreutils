@@ -351,7 +351,7 @@ pub fn uu_app() -> Command {
             Arg::new(options::EXPAND_TABS)
                 .long(options::EXPAND_TABS)
                 .short('e')
-                .num_args(0..=1)
+                .num_args(1)
                 .value_name("[CHAR][WIDTH]")
                 .help(translate!("pr-help-expand-tabs")),
         )
@@ -419,6 +419,7 @@ fn recreate_arguments(args: &[String]) -> Vec<String> {
     let column_page_option = Regex::new(r"^[-+]\d+.*").unwrap();
     let num_regex = Regex::new(r"^[^-]\d*$").unwrap();
     let n_regex = Regex::new(r"^-n\s*$").unwrap();
+    let e_regex = Regex::new(r"^-e\s*$").unwrap();
     let mut arguments = args.to_owned();
     let num_option = args.iter().find_position(|x| n_regex.is_match(x.trim()));
     if let Some((pos, _value)) = num_option {
@@ -426,6 +427,18 @@ fn recreate_arguments(args: &[String]) -> Vec<String> {
             if !num_regex.is_match(num_val_opt) {
                 let could_be_file = arguments.remove(pos + 1);
                 arguments.insert(pos + 1, format!("{}", NumberingMode::default().width));
+                arguments.insert(pos + 2, could_be_file);
+            }
+        }
+    }
+
+    let mut arguments = arguments.to_owned();
+    let num_option = args.iter().find_position(|x| e_regex.is_match(x.trim()));
+    if let Some((pos, _value)) = num_option {
+        if let Some(num_val_opt) = args.get(pos + 1) {
+            if !num_regex.is_match(num_val_opt) {
+                let could_be_file = arguments.remove(pos + 1);
+                arguments.insert(pos + 1, format!("\t8"));
                 arguments.insert(pos + 2, could_be_file);
             }
         }
