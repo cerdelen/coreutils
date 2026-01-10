@@ -22,6 +22,8 @@ use uucore::format_usage;
 use uucore::time::{FormatSystemTimeFallback, format, format_system_time};
 use uucore::translate;
 
+use crate::options::EXPAND_TABS;
+
 const TAB: char = '\t';
 const LINES_PER_PAGE: usize = 66;
 const LINES_PER_PAGE_FOR_FORM_FEED: usize = 63;
@@ -58,6 +60,7 @@ mod options {
     pub const JOIN_LINES: &str = "join-lines";
     pub const HELP: &str = "help";
     pub const FILES: &str = "files";
+    pub const EXPAND_TABS: &str = "expand-tabs";
 }
 
 struct OutputOptions {
@@ -80,6 +83,7 @@ struct OutputOptions {
     join_lines: bool,
     col_sep_for_printing: String,
     line_width: Option<usize>,
+    expand_tabs: Option<ExpandTabsOptions>,
 }
 
 struct FileLine {
@@ -103,6 +107,21 @@ struct NumberingMode {
     width: usize,
     separator: String,
     first_number: usize,
+}
+
+#[derive(Debug)]
+struct ExpandTabsOptions {
+    input_char: char,
+    width: usize,
+}
+
+impl Default for ExpandTabsOptions {
+    fn default() -> Self {
+        Self {
+            width: 8,
+            input_char: TAB,
+        }
+    }
 }
 
 impl Default for NumberingMode {
@@ -328,6 +347,14 @@ pub fn uu_app() -> Command {
                 .action(ArgAction::Append)
                 .value_hint(clap::ValueHint::FilePath),
         )
+        .arg(
+            Arg::new(options::EXPAND_TABS)
+                .long(options::EXPAND_TABS)
+                .short('e')
+                .num_args(0..=1)
+                .value_name("[CHAR][WIDTH]")
+                .help(translate!("pr-help-expand-tabs")),
+        )
 }
 
 #[uucore::main]
@@ -524,6 +551,25 @@ fn build_options(
                 None
             }
         });
+
+
+    let expand_tabs = matches
+        .get_one::<String>(options::EXPAND_TABS)
+        .map(|s| {
+            s.chars().next().map_or(Ok(ExpandTabsOptions::default()), |c| {
+                if c.is_ascii_digit() {
+                    s
+                        .parse()
+                        .map_err(|_e| PrError::EncounteredErrors { msg: format!("ERROR") })
+                        .map(|width| ExpandTabsOptions{input_char: TAB, width})
+                } else {
+                    s[1..]
+                        .parse()
+                        .map_err(|_e| PrError::EncounteredErrors { msg: format!("ERROR") })
+                        .map(|width| ExpandTabsOptions{input_char: c, width})
+                }
+            })
+        }).transpose()?;
 
     let double_space = matches.get_flag(options::DOUBLE_SPACE);
 
@@ -761,6 +807,7 @@ fn build_options(
         join_lines,
         col_sep_for_printing,
         line_width,
+        expand_tabs,
     })
 }
 
