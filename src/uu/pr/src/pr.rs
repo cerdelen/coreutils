@@ -112,7 +112,7 @@ struct NumberingMode {
 #[derive(Debug)]
 struct ExpandTabsOptions {
     input_char: char,
-    width: usize,
+    width: i32,
 }
 
 impl Default for ExpandTabsOptions {
@@ -436,8 +436,11 @@ fn recreate_arguments(args: &[String]) -> Vec<String> {
     // the default values for the -e flag is '-e' is present without direct arguments.
     let expand_tabs_option = arguments.iter().find_position(|x| e_regex.is_match(x.trim()));
     if let Some((pos, value)) = expand_tabs_option {
-        if value.trim().len() <= 2 {
+        let trimmed_val = value.trim();
+        if trimmed_val.len() <= 2 {
             arguments[pos] = "-e\t8".to_string();
+        } else if trimmed_val.len() == 3 {
+            arguments[pos].push('8');
         }
     }
 
@@ -864,7 +867,7 @@ fn open(path: &str) -> Result<Box<dyn Read>, PrError> {
     )
 }
 
-fn split_lines_if_form_feed(file_content: Result<String, std::io::Error>) -> Vec<FileLine> {
+fn split_lines_if_form_feed(file_content: Result<String, std::io::Error>, expand_options: &Option<ExpandTabsOptions>) -> Vec<FileLine> {
     file_content.map_or_else(
         |e| {
             vec![FileLine {
@@ -889,7 +892,15 @@ fn split_lines_if_form_feed(file_content: Result<String, std::io::Error>) -> Vec
                         });
                         chunk.clear();
                     }
-                    chunk.push(*byte);
+
+                    if let Some(expand_options) = expand_options &&
+                        *byte == expand_options.input_char as u8 {
+                        let spaces_needed = expand_options.width as usize - (chunk.len() % expand_options.width as usize);
+                        chunk.resize(chunk.len() + spaces_needed, b' ');
+                    } else {
+                        chunk.push(*byte);
+                    }
+
                     f_occurred = 0;
                 }
             }
@@ -923,7 +934,7 @@ fn read_stream_and_create_pages(
     options: &OutputOptions,
     lines: Lines<BufReader<Box<dyn Read>>>,
     file_id: usize,
-) -> Box<dyn Iterator<Item = (usize, Vec<FileLine>)>> {
+) -> Box<dyn Iterator<Item = (usize, Vec<FileLine>)> + '_> {
     let start_page = options.start_page;
     let start_line_number = get_start_line_number(options);
     let last_page = options.end_page;
@@ -931,7 +942,7 @@ fn read_stream_and_create_pages(
 
     Box::new(
         lines
-            .flat_map(split_lines_if_form_feed)
+            .flat_map(|s| split_lines_if_form_feed(s, &options.expand_tabs))
             .enumerate()
             .map(move |(i, line)| FileLine {
                 line_number: i + start_line_number,
