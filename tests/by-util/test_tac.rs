@@ -347,3 +347,24 @@ fn test_stdin_bad_tmpdir_fallback() {
         .succeeds()
         .stdout_is("c\nb\na\n");
 }
+
+
+#[test]
+fn test_file_truncated_while_read() {
+    use std::thread;
+    let (at, mut ucmd) = at_and_ucmd!();
+    let test_file = "test_trunc_file";
+    at.write_bytes(test_file, &vec![0u8; 10 * 1024 * 1024]);
+    let at_clone = at.clone();
+
+    let truncate_handle = thread::spawn(move || {
+        thread::sleep(std::time::Duration::from_millis(1));
+        at_clone.truncate(test_file, "");
+    });
+
+    ucmd
+        .arg(test_file)
+        .succeeds();
+
+    truncate_handle.join().unwrap();
+}
