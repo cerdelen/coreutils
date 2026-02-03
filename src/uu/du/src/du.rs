@@ -959,10 +959,47 @@ fn read_files_from(file_name: &OsStr) -> Result<Vec<PathBuf>, std::io::Error> {
     Ok(paths)
 }
 
+fn get_block_size_arg_index_if_present(matches: &ArgMatches, flag: &str) -> Option<usize> {
+    if matches.get_flag(flag) {
+        /// Indices of returns index even if flag is not present, thats why we need to if guard it
+        matches.indices_of(flag).and_then(|indices| indices.last())
+    } else {
+        None
+    }
+}
+
+fn handle_block_size_arg_override(matches: &ArgMatches) -> Option<SizeFormat> {
+    let candidates = [
+        (
+            SizeFormat::BlockSize(1),
+            get_block_size_arg_index_if_present(matches, options::BYTES),
+        ),
+        (
+            SizeFormat::BlockSize(1024),
+            get_block_size_arg_index_if_present(matches, options::BLOCK_SIZE_1K),
+        ),
+        (
+            SizeFormat::BlockSize(1024 * 1024),
+            get_block_size_arg_index_if_present(matches, options::BLOCK_SIZE_1M),
+        ),
+    ];
+
+    candidates
+        .into_iter()
+        .filter(|(size_format, idx)| idx.is_some())
+        .max_by_key(|&(ref size_format, idx)| idx.unwrap_or(0))
+        .map(|(size_format, idx)| size_format)
+}
+
 #[uucore::main]
 #[allow(clippy::cognitive_complexity)]
 pub fn uumain(args: impl uucore::Args) -> UResult<()> {
     let matches = uucore::clap_localization::handle_clap_result(uu_app(), args)?;
+
+    let k_last_index = matches
+        .indices_of(options::BLOCK_SIZE_1K)
+        .and_then(|indices| indices.last())
+        .unwrap_or(0);
 
     let summarize = matches.get_flag(options::SUMMARIZE);
 
@@ -1014,12 +1051,8 @@ pub fn uumain(args: impl uucore::Args) -> UResult<()> {
         SizeFormat::HumanBinary
     } else if matches.get_flag(options::SI) {
         SizeFormat::HumanDecimal
-    } else if matches.get_flag(options::BYTES) {
-        SizeFormat::BlockSize(1)
-    } else if matches.get_flag(options::BLOCK_SIZE_1K) {
-        SizeFormat::BlockSize(1024)
-    } else if matches.get_flag(options::BLOCK_SIZE_1M) {
-        SizeFormat::BlockSize(1024 * 1024)
+    } else if let Some(size_format) = handle_block_size_arg_override(&matches) {
+        size_format
     } else {
         let block_size_str = matches.get_one::<String>(options::BLOCK_SIZE);
         let block_size = read_block_size(block_size_str.map(AsRef::as_ref))?;
@@ -1281,11 +1314,6 @@ pub fn uu_app() -> Command {
             Arg::new(options::BYTES)
                 .short('b')
                 .long("bytes")
-                .overrides_with_all([
-                    options::BLOCK_SIZE_1K,
-                    options::BLOCK_SIZE_1M,
-                    options::BYTES,
-                ])
                 .help(translate!("du-help-bytes"))
                 .action(ArgAction::SetTrue),
         )
@@ -1319,11 +1347,6 @@ pub fn uu_app() -> Command {
         .arg(
             Arg::new(options::BLOCK_SIZE_1K)
                 .short('k')
-                .overrides_with_all([
-                    options::BLOCK_SIZE_1K,
-                    options::BLOCK_SIZE_1M,
-                    options::BYTES,
-                ])
                 .help(translate!("du-help-block-size-1k"))
                 .action(ArgAction::SetTrue),
         )
@@ -1360,11 +1383,6 @@ pub fn uu_app() -> Command {
         .arg(
             Arg::new(options::BLOCK_SIZE_1M)
                 .short('m')
-                .overrides_with_all([
-                    options::BLOCK_SIZE_1K,
-                    options::BLOCK_SIZE_1M,
-                    options::BYTES,
-                ])
                 .help(translate!("du-help-block-size-1m"))
                 .action(ArgAction::SetTrue),
         )
