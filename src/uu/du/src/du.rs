@@ -961,8 +961,10 @@ fn read_files_from(file_name: &OsStr) -> Result<Vec<PathBuf>, std::io::Error> {
 
 fn get_block_size_arg_index_if_present(matches: &ArgMatches, flag: &str) -> Option<usize> {
     if matches.get_flag(flag) {
-        /// Indices of returns index even if flag is not present, thats why we need to if guard it
-        matches.indices_of(flag).and_then(|indices| indices.last())
+        // Indices of returns index even if flag is not present, thats why we need to if guard it
+        matches
+            .indices_of(flag)
+            .and_then(|mut indices| indices.next_back())
     } else {
         None
     }
@@ -986,20 +988,15 @@ fn handle_block_size_arg_override(matches: &ArgMatches) -> Option<SizeFormat> {
 
     candidates
         .into_iter()
-        .filter(|(size_format, idx)| idx.is_some())
-        .max_by_key(|&(ref size_format, idx)| idx.unwrap_or(0))
-        .map(|(size_format, idx)| size_format)
+        .filter(|(_, idx)| idx.is_some())
+        .max_by_key(|&(_, idx)| idx.unwrap_or(0))
+        .map(|(size_format, _)| size_format)
 }
 
 #[uucore::main]
 #[allow(clippy::cognitive_complexity)]
 pub fn uumain(args: impl uucore::Args) -> UResult<()> {
     let matches = uucore::clap_localization::handle_clap_result(uu_app(), args)?;
-
-    let k_last_index = matches
-        .indices_of(options::BLOCK_SIZE_1K)
-        .and_then(|indices| indices.last())
-        .unwrap_or(0);
 
     let summarize = matches.get_flag(options::SUMMARIZE);
 
