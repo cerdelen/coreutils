@@ -370,16 +370,16 @@ fn test_extended_tabstop_syntax() {
 #[test]
 fn test_buffered_reads_new_line_in_first_chunk() {
     // input has newlines in first chunk and has leading spaces after newline in chunk
-    let mut input = vec![b'0';180];
+    let mut input = vec![b'0'; 180];
     input.push(b'\n');
-    input.extend([b' ';8]);
-    input.extend([b'0';3897]);
+    input.extend([b' '; 8]);
+    input.extend([b'0'; 3897]);
     input.push(b'\n');
 
-    let mut expected = vec![b'0';180];
+    let mut expected = vec![b'0'; 180];
     expected.push(b'\n');
     expected.push(b'\t');
-    expected.extend([b'0';3897]);
+    expected.extend([b'0'; 3897]);
     expected.push(b'\n');
 
     new_ucmd!()
@@ -391,33 +391,32 @@ fn test_buffered_reads_new_line_in_first_chunk() {
 #[test]
 fn test_leading_spaces_after_chunk_without_newline() {
     // input has newline after first chunk with leading spaces
-    let mut input = vec![b'0';4096];
+    let mut input = vec![b'0'; 4096];
     input.push(b'\n');
-    input.extend([b' ';8]);
-    input.extend([b'0';4]);
+    input.extend([b' '; 8]);
+    input.extend([b'0'; 4]);
     input.push(b'\n');
 
-    let mut expected = vec![b'0';4096];
+    let mut expected = vec![b'0'; 4096];
     expected.push(b'\n');
     expected.push(b'\t');
-    expected.extend([b'0';4]);
+    expected.extend([b'0'; 4]);
     expected.push(b'\n');
-
 }
 
 #[test]
 fn test_trailing_spaces_and_leading_spaces_in_chunk_without_newline() {
     // fixture has newlines in first chunk and has leading spaces after newline in chunk
-    let mut input = vec![b'0';4095];
+    let mut input = vec![b'0'; 4095];
     input.push(b'\n');
-    input.extend([b' ';8]);
-    input.extend([b'0';4]);
+    input.extend([b' '; 8]);
+    input.extend([b'0'; 4]);
     input.push(b'\n');
 
-    let mut expected = vec![b'0';4095];
+    let mut expected = vec![b'0'; 4095];
     expected.push(b'\n');
     expected.push(b'\t');
-    expected.extend([b'0';4]);
+    expected.extend([b'0'; 4]);
     expected.push(b'\n');
 
     new_ucmd!()
@@ -430,18 +429,18 @@ fn test_trailing_spaces_and_leading_spaces_in_chunk_without_newline() {
 fn test_trailing_spaces_in_chunk_without_newline() {
     // input has trailing spaces in the first chunk (should not be unexpanded) into newline with leading
     // spaces which should be unexpanded
-    let mut input = vec![b'0';4088];
-    input.extend([b' ';8]);
+    let mut input = vec![b'0'; 4088];
+    input.extend([b' '; 8]);
     input.push(b'\n');
-    input.extend([b' ';8]);
-    input.extend([b'0';4]);
+    input.extend([b' '; 8]);
+    input.extend([b'0'; 4]);
     input.push(b'\n');
 
-    let mut expected = vec![b'0';4088];
-    expected.extend([b' ';8]);
+    let mut expected = vec![b'0'; 4088];
+    expected.extend([b' '; 8]);
     expected.push(b'\n');
     expected.push(b'\t');
-    expected.extend([b'0';4]);
+    expected.extend([b'0'; 4]);
     expected.push(b'\n');
 
     new_ucmd!()
@@ -453,14 +452,14 @@ fn test_trailing_spaces_in_chunk_without_newline() {
 #[test]
 fn test_chunk_without_new_lines_into_leading_spaces_next_chunk() {
     // input has no new_line in first chunk into leading spaces (should not be unexpanded)
-    let mut input = vec![b'0';4096];
-    input.extend([b' ';8]);
-    input.extend([b'0';4]);
+    let mut input = vec![b'0'; 4096];
+    input.extend([b' '; 8]);
+    input.extend([b'0'; 4]);
     input.push(b'\n');
 
-    let mut expected = vec![b'0';4096];
-    expected.extend([b' ';8]);
-    expected.extend([b'0';4]);
+    let mut expected = vec![b'0'; 4096];
+    expected.extend([b' '; 8]);
+    expected.extend([b'0'; 4]);
     expected.push(b'\n');
 
     new_ucmd!()
@@ -473,18 +472,18 @@ fn test_chunk_without_new_lines_into_leading_spaces_next_chunk() {
 fn test_new_line_in_chunk_all_normal_chars() {
     // input has trailing spaces in first chunk (should not be unexpanded) into new line in new
     // chunk into leading spaces (should be unexpanded)
-    let mut input = vec![b'0';4088];
-    input.extend([b' ';8]);
+    let mut input = vec![b'0'; 4088];
+    input.extend([b' '; 8]);
     input.push(b'\n');
-    input.extend([b' ';8]);
-    input.extend([b'0';4]);
+    input.extend([b' '; 8]);
+    input.extend([b'0'; 4]);
     input.push(b'\n');
 
-    let mut expected = vec![b'0';4088];
-    expected.extend([b' ';8]);
+    let mut expected = vec![b'0'; 4088];
+    expected.extend([b' '; 8]);
     expected.push(b'\n');
     expected.push(b'\t');
-    expected.extend([b'0';4]);
+    expected.extend([b'0'; 4]);
     expected.push(b'\n');
 
     new_ucmd!()
@@ -498,20 +497,20 @@ fn test_new_line_in_chunk_few_trailing_blanks_into_normal_chars_into_leading_bla
  {
     // input has a few blanks after a new line in first chunk (should be unexpanded), into normal chars into
     // leading blanks (should not be unexpanded) into normal chars
-    let mut input = vec![b'0';4079];
+    let mut input = vec![b'0'; 4079];
     input.push(b'\n');
-    input.extend([b' ';8]);
-    input.extend([b'0';8]);
-    input.extend([b' ';8]);
-    input.extend([b'0';4]);
+    input.extend([b' '; 8]);
+    input.extend([b'0'; 8]);
+    input.extend([b' '; 8]);
+    input.extend([b'0'; 4]);
     input.push(b'\n');
 
-    let mut expected = vec![b'0';4079];
+    let mut expected = vec![b'0'; 4079];
     expected.push(b'\n');
     expected.push(b'\t');
-    expected.extend([b'0';8]);
-    expected.extend([b' ';8]);
-    expected.extend([b'0';4]);
+    expected.extend([b'0'; 8]);
+    expected.extend([b' '; 8]);
+    expected.extend([b'0'; 4]);
     expected.push(b'\n');
 
     new_ucmd!()
@@ -523,16 +522,16 @@ fn test_new_line_in_chunk_few_trailing_blanks_into_normal_chars_into_leading_bla
 #[test]
 fn test_new_line_in_chunk_few_trailing_spaces_into_normal_chars() {
     // input has a few trailing spaces in first chunk after a new line (should be unexpanded)
-    let mut input = vec![b'0';4079];
+    let mut input = vec![b'0'; 4079];
     input.push(b'\n');
-    input.extend([b' ';8]);
-    input.extend([b'0';8]);
+    input.extend([b' '; 8]);
+    input.extend([b'0'; 8]);
     input.push(b'\n');
 
-    let mut expected = vec![b'0';4079];
+    let mut expected = vec![b'0'; 4079];
     expected.push(b'\n');
     expected.push(b'\t');
-    expected.extend([b'0';8]);
+    expected.extend([b'0'; 8]);
     expected.push(b'\n');
 
     new_ucmd!()
@@ -545,16 +544,16 @@ fn test_new_line_in_chunk_few_trailing_spaces_into_normal_chars() {
 fn test_new_line_in_chunk_normal_chars_into_leading_blanks() {
     // input has a trailing normal chars after new line in first chunk into leading spaces for new
     // chunk (should not be unexpanded)
-    let mut input = vec![b'0';4087];
+    let mut input = vec![b'0'; 4087];
     input.push(b'\n');
-    input.extend([b'0';8]);
-    input.extend([b' ';8]);
+    input.extend([b'0'; 8]);
+    input.extend([b' '; 8]);
     input.push(b'\n');
 
-    let mut expected = vec![b'0';4087];
+    let mut expected = vec![b'0'; 4087];
     expected.push(b'\n');
-    expected.extend([b'0';8]);
-    expected.extend([b' ';8]);
+    expected.extend([b'0'; 8]);
+    expected.extend([b' '; 8]);
     expected.push(b'\n');
 
     new_ucmd!()
@@ -567,13 +566,13 @@ fn test_new_line_in_chunk_normal_chars_into_leading_blanks() {
 fn test_new_line_in_chunk_trailing_blanks_into_leading_blanks_into_normal_chars() {
     // input has a trailing blanks after new line in first chunk (should be unexpanded) into leading spaces for new
     // chunk (should be unexpanded)
-    let mut input = vec![b'0';4087];
+    let mut input = vec![b'0'; 4087];
     input.push(b'\n');
-    input.extend([b' ';8]);
-    input.extend([b' ';8]);
+    input.extend([b' '; 8]);
+    input.extend([b' '; 8]);
     input.push(b'\n');
 
-    let mut expected = vec![b'0';4087];
+    let mut expected = vec![b'0'; 4087];
     expected.push(b'\n');
     expected.push(b'\t');
     expected.push(b'\t');
@@ -589,13 +588,13 @@ fn test_new_line_in_chunk_trailing_blanks_into_leading_blanks_into_normal_chars(
 fn test_new_line_in_chunk_trailing_blanks_into_leading_blanks_only_together_unexpanded() {
     // input has a trailing blanks after new line in first chunk (should be unexpanded) into leading spaces for new
     // chunk (should be unexpanded) (these chars are split by the buffer bounds)
-    let mut input = vec![b'0';4091];
+    let mut input = vec![b'0'; 4091];
     input.push(b'\n');
-    input.extend([b' ';4]);
-    input.extend([b' ';4]);
+    input.extend([b' '; 4]);
+    input.extend([b' '; 4]);
     input.push(b'\n');
 
-    let mut expected = vec![b'0';4091];
+    let mut expected = vec![b'0'; 4091];
     expected.push(b'\n');
     expected.push(b'\t');
     expected.push(b'\n');
@@ -605,4 +604,3 @@ fn test_new_line_in_chunk_trailing_blanks_into_leading_blanks_only_together_unex
         .succeeds()
         .stdout_only(String::from_utf8(expected).unwrap());
 }
-
